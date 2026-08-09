@@ -385,6 +385,12 @@ class StarForgeApplication:
             if cancellation:
                 cancellation.raise_if_cancelled()
             os.replace(temporary, output)
+        except OSError as exc:
+            raise ApplicationError(
+                f"Could not publish the output plugin: {exc}",
+                code="output_write_failed",
+                exit_code=ExitCode.INPUT_ERROR,
+            ) from exc
         finally:
             temporary.unlink(missing_ok=True)
 

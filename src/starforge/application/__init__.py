@@ -11,6 +11,7 @@ from .models import (
     ProgressUpdate,
     ProjectSpec,
 )
+from .recovery import RecoveryRecord, RecoveryStore
 from .service import StarForgeApplication
 from .workspace import Workspace
 
@@ -26,6 +27,8 @@ __all__ = [
     "OrbitUpdateRequest",
     "ProgressUpdate",
     "ProjectSpec",
+    "RecoveryRecord",
+    "RecoveryStore",
     "StarForgeApplication",
     "Workspace",
 ]

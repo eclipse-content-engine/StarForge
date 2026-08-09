@@ -16,6 +16,13 @@
 - Added live object identifiers, dependency explanations, applied-change
   summaries, persistent window geometry, and remembered project directories.
 - Added workspace, background-task, safe-export, and WCAG AA contrast tests.
+- Added Phase 5 bounded undo/redo and transactional rollback for desktop edits.
+- Added atomic crash-recovery plugins with non-executable JSON metadata and a
+  guided recovery offer in the desktop UI.
+- Added Unicode, deep-path, read-only input, malformed plugin, missing archive,
+  interrupted publish, recovery, and UI render hardening tests.
+- Documented the supported-operation boundary, known limitations, and external
+  xEdit/Creation Kit/in-game validation matrix.
 
 ## 0.2.0 - 2026-08-08
 

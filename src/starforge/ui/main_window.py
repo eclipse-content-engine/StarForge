@@ -4,7 +4,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QByteArray, QSettings, Qt, QThreadPool
+from PySide6.QtCore import QByteArray, QSettings, QStandardPaths, Qt, QThreadPool
 from PySide6.QtGui import QCloseEvent, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -30,7 +30,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..application import ApplicationError, CancellationToken, ProgressUpdate, Workspace
+from ..application import (
+    ApplicationError,
+    CancellationToken,
+    ProgressUpdate,
+    RecoveryRecord,
+    RecoveryStore,
+    Workspace,
+)
 from ..core.models import ClonePreview, OrbitalElements
 from ..core.orbits import PRESETS, degrees_to_radians, radians_to_degrees
 from .components import InspectorRow, NavButton, NoticeBanner, PageHeader, Surface
@@ -53,6 +60,11 @@ class MainWindow(QMainWindow):
         self.settings = QSettings("Eclipse Content Engine", "StarForge")
         self.thread_pool = QThreadPool.globalInstance()
         self.active_task: BackgroundTask | None = None
+        recovery_location = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppLocalDataLocation)
+        self.recovery_store = RecoveryStore(Path(recovery_location) / "recovery")
+        self.recovery_record: RecoveryRecord | None = None
+        self.recovery_task: BackgroundTask | None = None
+        self.recovery_dirty = False
         self.setWindowTitle("StarForge")
         self.setMinimumSize(1080, 720)
         self.resize(1440, 900)
@@ -60,10 +72,12 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._install_shortcuts()
         self._set_enabled(False)
+        self._update_history_controls()
         self.navigate(PROJECT_PAGE)
         saved_geometry = self.settings.value("window/geometry")
         if isinstance(saved_geometry, QByteArray):
             self.restoreGeometry(saved_geometry)
+        self._refresh_recovery_offer()
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -156,11 +170,19 @@ class MainWindow(QMainWindow):
         self.cancel_task_button.setProperty("variant", "ghost")
         self.cancel_task_button.clicked.connect(self.cancel_active_task)
         self.cancel_task_button.hide()
+        self.undo_button = QPushButton("Undo")
+        self.undo_button.setProperty("variant", "ghost")
+        self.undo_button.clicked.connect(self.undo)
+        self.redo_button = QPushButton("Redo")
+        self.redo_button.setProperty("variant", "ghost")
+        self.redo_button.clicked.connect(self.redo)
         self.open_button = QPushButton("Open project")
         self.open_button.setProperty("variant", "primary")
         self.open_button.clicked.connect(self.open_session)
         layout.addWidget(self.task_progress)
         layout.addWidget(self.cancel_task_button)
+        layout.addWidget(self.undo_button)
+        layout.addWidget(self.redo_button)
         layout.addWidget(self.validation_label)
         layout.addWidget(self.open_button)
         return bar
@@ -213,8 +235,24 @@ class MainWindow(QMainWindow):
         inputs.content_layout.addWidget(self.source_label)
         inputs.content_layout.addWidget(self.dest_label)
         inputs.content_layout.addStretch(1)
+        self.recovery_panel = Surface("Recover autosaved work", "StarForge found a protected recovery plugin.")
+        self.recovery_summary = QLabel()
+        self.recovery_summary.setProperty("role", "muted")
+        self.recovery_summary.setWordWrap(True)
+        self.recover_button = QPushButton("Recover previous session")
+        self.recover_button.clicked.connect(self.recover_session)
+        self.dismiss_recovery_button = QPushButton("Discard recovery")
+        self.dismiss_recovery_button.setProperty("variant", "ghost")
+        self.dismiss_recovery_button.clicked.connect(self.discard_recovery)
+        recovery_actions = QHBoxLayout()
+        recovery_actions.addWidget(self.recover_button)
+        recovery_actions.addWidget(self.dismiss_recovery_button)
+        self.recovery_panel.content_layout.addWidget(self.recovery_summary)
+        self.recovery_panel.content_layout.addLayout(recovery_actions)
+        self.recovery_panel.hide()
         columns.addWidget(welcome, 3)
         columns.addWidget(inputs, 2)
+        layout.addWidget(self.recovery_panel)
         layout.addLayout(columns, 1)
         return page
 
@@ -500,6 +538,8 @@ class MainWindow(QMainWindow):
             shortcut = QShortcut(QKeySequence(f"Ctrl+{index + 1}"), self)
             shortcut.activated.connect(lambda page=index: self.navigate(page))
         QShortcut(QKeySequence.StandardKey.Open, self).activated.connect(self.open_session)
+        QShortcut(QKeySequence.StandardKey.Undo, self).activated.connect(self.undo)
+        QShortcut(QKeySequence.StandardKey.Redo, self).activated.connect(self.redo)
         QShortcut(QKeySequence("Ctrl+Shift+S"), self).activated.connect(self.save_as)
 
     def navigate(self, page: int) -> None:
@@ -567,8 +607,47 @@ class MainWindow(QMainWindow):
             recovery="Check that both plugins are readable and choose different source and destination files.",
         )
 
+    def _refresh_recovery_offer(self) -> None:
+        self.recovery_record = self.recovery_store.latest()
+        if self.recovery_record is None:
+            self.recovery_panel.hide()
+            return
+        record = self.recovery_record
+        omitted = (
+            f" {len(record.omitted_staged_drafts)} unapplied clone draft(s) were not included."
+            if record.omitted_staged_drafts
+            else ""
+        )
+        self.recovery_summary.setText(
+            f"Autosaved {record.created_at.astimezone():%Y-%m-%d %H:%M}. "
+            f"Original destination: {record.destination_path}.{omitted}"
+        )
+        self.recovery_panel.show()
+
+    def recover_session(self) -> None:
+        if self.recovery_record is None:
+            return
+        record = self.recovery_record
+
+        def recover_workspace(token: CancellationToken, progress: Callable[[ProgressUpdate], None]) -> Workspace:
+            return Workspace.recover(record, cancellation=token, progress=progress)
+
+        self._start_background(
+            recover_workspace,
+            self._workspace_opened,
+            title="Recovering project",
+            recovery="Keep the recovery files and verify that the original source plugin is still available.",
+        )
+
+    def discard_recovery(self) -> None:
+        if self.recovery_record is None:
+            return
+        self.recovery_store.clear(self.recovery_record.source_path, self.recovery_record.destination_path)
+        self._refresh_recovery_offer()
+
     def _workspace_opened(self, workspace: Workspace) -> None:
         self.session = workspace
+        workspace.enable_recovery(self.recovery_store)
         self.design_preview_mode = False
         self.current_preview = None
         self.source_label.setText(f"Source master\n{workspace.source_path}")
@@ -586,6 +665,32 @@ class MainWindow(QMainWindow):
         self.navigate(EXPLORE_PAGE)
         self.settings.setValue("recent/source_directory", str(workspace.source_path.parent))
         self.settings.setValue("recent/destination_directory", str(workspace.destination_path.parent))
+
+    def undo(self) -> None:
+        if self.session is None or not self.session.can_undo:
+            return
+        self.session.undo()
+        self.current_preview = None
+        self._populate_lists()
+
+    def redo(self) -> None:
+        if self.session is None or not self.session.can_redo:
+            return
+        self.session.redo()
+        self.current_preview = None
+        self._populate_lists()
+
+    def _update_history_controls(self) -> None:
+        can_undo = self.session is not None and self.session.can_undo
+        can_redo = self.session is not None and self.session.can_redo
+        self.undo_button.setEnabled(can_undo)
+        self.redo_button.setEnabled(can_redo)
+        self.undo_button.setToolTip(
+            f"Undo {self.session.undo_label}" if can_undo and self.session else "Nothing to undo"
+        )
+        self.redo_button.setToolTip(
+            f"Redo {self.session.redo_label}" if can_redo and self.session else "Nothing to redo"
+        )
 
     def enter_design_preview(self) -> None:
         self.session = None
@@ -661,6 +766,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("recent/output_directory", str(output_path.parent))
         self.validation_label.setText("●  Export validated")
         self.validation_label.setProperty("status", "success")
+        self._refresh_recovery_offer()
 
     def _start_background(
         self,
@@ -708,6 +814,40 @@ class MainWindow(QMainWindow):
         self.active_task = None
         self.cancel_task_button.setEnabled(True)
         self._set_busy(False)
+
+    def _schedule_recovery(self) -> None:
+        if self.session is None or self.design_preview_mode:
+            return
+        if self.session.pending_change_count == 0:
+            self.session.clear_recovery()
+            self._refresh_recovery_offer()
+            return
+        if self.recovery_task is not None:
+            self.recovery_dirty = True
+            return
+        workspace = self.session
+
+        def save_snapshot(token: CancellationToken, progress: Callable[[ProgressUpdate], None]) -> object:
+            return workspace.save_recovery(cancellation=token, progress=progress)
+
+        task = BackgroundTask(save_snapshot)
+        task.signals.error.connect(self._recovery_failed)
+        task.signals.finished.connect(self._recovery_finished)
+        self.recovery_task = task
+        self.recovery_dirty = False
+        self.thread_pool.start(task)
+
+    def _recovery_failed(self, error: object) -> None:
+        self.status_label.setText(f"Changes are in memory, but autosave failed: {error}")
+        self.status_label.setProperty("status", "warning")
+
+    def _recovery_finished(self) -> None:
+        rerun = self.recovery_dirty
+        self.recovery_task = None
+        self.recovery_dirty = False
+        self._refresh_recovery_offer()
+        if rerun:
+            self._schedule_recovery()
 
     def _show_error(self, title: str, error: object, recovery: str) -> None:
         message = QMessageBox(self)
@@ -1132,9 +1272,13 @@ class MainWindow(QMainWindow):
         count = self.session.pending_change_count
         self.change_count_label.setText(f"{count} pending {'change' if count == 1 else 'changes'}")
         self.status_label.setText(self.session.state.status_text)
+        self._update_history_controls()
+        self._schedule_recovery()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.settings.setValue("window/geometry", self.saveGeometry())
         if self.active_task is not None:
             self.active_task.cancel()
+        if self.recovery_task is not None:
+            self.recovery_task.cancel()
         super().closeEvent(event)

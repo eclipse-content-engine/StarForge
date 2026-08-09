@@ -23,6 +23,13 @@ jobs:
       - run: python -m mypy src/starforge
       - run: python scripts/check_publication.py
       - run: python -m build
+      - name: Verify the built wheel installs outside the source tree
+        run: |
+          python -m pip uninstall --yes starforge
+          python -m pip install --no-deps dist/*.whl
+          cd "$(mktemp -d)"
+          python -I -c "import starforge; from starforge.application import Workspace"
+          starforge --help
 
   test:
     strategy:

@@ -120,8 +120,8 @@ WCAG AA contrast checks complete the validation gate.
 
 **Goal:** replace the prototype window with a polished, guided application.
 
-**Current status:** implementation complete as of 2026-08-08 and ready for
-review. The desktop client now uses the shared application layer, keeps plugin
+**Current status:** complete and merged as of 2026-08-08. The desktop client
+uses the shared application layer, keeps plugin
 parsing and export off the UI thread, and preserves the Phase 2 write-safety
 contract.
 
@@ -147,15 +147,19 @@ contract.
 
 **Goal:** prove that StarForge is safe and dependable on real projects.
 
+**Current status:** automated hardening is implemented. External xEdit,
+Creation Kit, and in-game compatibility runs remain the final Phase 5 gate and
+must use locally owned game data outside the public repository.
+
 ### Work
 
-- Add undo/redo or command-level rollback.
-- Add crash recovery and project autosave.
-- Add UI smoke tests and selected visual snapshots.
-- Test clean installation, upgrades, Unicode paths, long paths, read-only inputs,
+- [x] Add undo/redo and transactional command rollback.
+- [x] Add crash recovery and project autosave.
+- [x] Add UI smoke tests and selected render snapshots.
+- [x] Test clean installation, schema handling, Unicode paths, supported long paths, read-only inputs,
   missing archives, interrupted writes, and malformed plugins.
-- Validate representative outputs with xEdit, Creation Kit, and in-game checks.
-- Document the supported-operation matrix and known limitations.
+- [ ] Validate representative outputs with xEdit, Creation Kit, and in-game checks.
+- [x] Document the supported-operation matrix and known limitations.
 
 ### Exit criteria
 
