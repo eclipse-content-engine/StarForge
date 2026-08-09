@@ -3,7 +3,7 @@ from __future__ import annotations
 from conftest import PluginFixtures
 from pytestqt.qtbot import QtBot
 
-from starforge.core.session import StarForgeSession
+from starforge.application import Workspace
 from starforge.ui.main_window import CREATE_PAGE, EXPLORE_PAGE, ORBITS_PAGE, PROJECT_PAGE, REVIEW_PAGE, MainWindow
 
 
@@ -86,7 +86,7 @@ def test_design_preview_filters_source_templates_by_body_type(qtbot: QtBot) -> N
 def test_missing_matching_template_has_clear_disabled_state(qtbot: QtBot, plugin_fixtures: PluginFixtures) -> None:
     window = MainWindow()
     qtbot.addWidget(window)
-    window.session = StarForgeSession(plugin_fixtures.source, plugin_fixtures.destination)
+    window.session = Workspace.open(plugin_fixtures.source, plugin_fixtures.destination)
     window._populate_lists()
     window._set_enabled(True)
 

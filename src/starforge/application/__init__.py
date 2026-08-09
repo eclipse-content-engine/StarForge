@@ -4,6 +4,7 @@ from .models import (
     ClonePlanetRequest,
     CloneStarRequest,
     ExitCode,
+    OperationCancelledError,
     OperationResult,
     OrbitPresetRequest,
     OrbitUpdateRequest,
@@ -11,6 +12,7 @@ from .models import (
     ProjectSpec,
 )
 from .service import StarForgeApplication
+from .workspace import Workspace
 
 __all__ = [
     "ApplicationError",
@@ -19,9 +21,11 @@ __all__ = [
     "CloneStarRequest",
     "ExitCode",
     "OperationResult",
+    "OperationCancelledError",
     "OrbitPresetRequest",
     "OrbitUpdateRequest",
     "ProgressUpdate",
     "ProjectSpec",
     "StarForgeApplication",
+    "Workspace",
 ]

@@ -3,8 +3,8 @@
 StarForge is a desktop and command-line toolkit for safely creating and editing
 Starfield star systems, planets, moons, and orbital data.
 
-The project is currently in pre-alpha development. Its existing PySide6 window
-is a functional prototype; a new guided desktop experience is planned in
+The project is currently in pre-alpha development. Its PySide6 desktop client
+provides a guided, non-destructive authoring workflow described in
 [`docs/IMPLEMENTATION_PHASES.md`](docs/IMPLEMENTATION_PHASES.md).
 
 ## Current capabilities
@@ -18,10 +18,11 @@ is a functional prototype; a new guided desktop experience is planned in
 
 ## Development status
 
-Phases 1 and 2 are complete. StarForge now has a reproducible public foundation,
-a typed application layer, and a stable non-interactive CLI. Phase 3 is in
-progress with a navigable replacement UI prototype and documented visual system
-awaiting design approval before the desktop MVP is wired.
+Phases 1 through 3 are complete, and the Phase 4 desktop MVP is ready for
+review. StarForge now has a reproducible public foundation, a typed application
+layer, a stable non-interactive CLI, and a polished guided UI over the same
+engine. Project loading and validated export run in cancellable background jobs;
+inputs remain protected and every pending write is reviewable.
 
 The public test suite builds compact synthetic plugins and archives at runtime.
 Optional private compatibility tests remain excluded from version control. See

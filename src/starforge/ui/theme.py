@@ -123,5 +123,14 @@ def application_stylesheet(tokens: DesignTokens = TOKENS) -> str:
     QScrollBar::handle:vertical:hover {{ background: {tokens.muted}; }}
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
     QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: transparent; }}
+    QProgressBar {{
+        min-height: 8px;
+        max-height: 8px;
+        color: transparent;
+        background: {tokens.surface};
+        border: 1px solid {tokens.border};
+        border-radius: 4px;
+    }}
+    QProgressBar::chunk {{ background: {tokens.accent}; border-radius: 3px; }}
     QToolTip {{ color: {tokens.text}; background: {tokens.raised}; border: 1px solid {tokens.border}; padding: 6px; }}
     """

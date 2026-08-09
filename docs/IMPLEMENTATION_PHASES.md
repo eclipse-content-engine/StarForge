@@ -93,9 +93,10 @@ validated and atomically replaced.
 **Goal:** approve the new interaction model and visual language before wiring
 every backend feature into widgets.
 
-**Current status:** in final validation. The UX specification, design tokens,
-reusable components, and navigable PySide6 prototype received visual approval
-on 2026-08-08. Final Windows high-DPI and contrast validation remain open.
+**Current status:** complete as of 2026-08-08. The UX specification, design
+tokens, reusable components, and navigable PySide6 prototype received visual
+approval. Qt 6 scaling, keyboard navigation, visible focus states, and automated
+WCAG AA contrast checks complete the validation gate.
 
 ### Work
 
@@ -105,7 +106,7 @@ on 2026-08-08. Final Windows high-DPI and contrast validation remain open.
 - [x] Define typography, color, spacing, elevation, iconography, and component states.
 - [x] Build reusable PySide6 navigation, surface, field, notice, inspector, and
   command components.
-- [ ] Validate high-DPI behavior, keyboard navigation, focus visibility, and color
+- [x] Validate high-DPI behavior, keyboard navigation, focus visibility, and color
   contrast.
 - [x] Receive design approval before Phase 4 feature integration.
 
@@ -119,16 +120,21 @@ on 2026-08-08. Final Windows high-DPI and contrast validation remain open.
 
 **Goal:** replace the prototype window with a polished, guided application.
 
+**Current status:** implementation complete as of 2026-08-08 and ready for
+review. The desktop client now uses the shared application layer, keeps plugin
+parsing and export off the UI thread, and preserves the Phase 2 write-safety
+contract.
+
 ### Work
 
-- Build project setup and preflight validation.
-- Build a searchable star-system hierarchy.
-- Implement guided star, planet, and moon cloning.
-- Implement a friendly orbit editor with presets and advanced numeric controls.
-- Implement system-ID allocation and dependency explanations.
-- Add the persistent change tray, human summary, technical details, and export.
-- Move parsing and writing off the UI thread and expose progress/cancellation.
-- Persist window state and non-sensitive user preferences.
+- [x] Build project setup and preflight validation.
+- [x] Build a searchable star-system hierarchy.
+- [x] Implement guided star, planet, and moon cloning.
+- [x] Implement a friendly orbit editor with presets and advanced numeric controls.
+- [x] Implement system-ID allocation and dependency explanations.
+- [x] Add the persistent change tray, human summary, technical details, and export.
+- [x] Move parsing and writing off the UI thread and expose progress/cancellation.
+- [x] Persist window state and non-sensitive user preferences.
 
 ### Exit criteria
 

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtCore import QByteArray, QSettings, Qt, QThreadPool
+from PySide6.QtGui import QCloseEvent, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -18,6 +20,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QMainWindow,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSplitter,
@@ -27,10 +30,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..application import ApplicationError, CancellationToken, ProgressUpdate, Workspace
 from ..core.models import ClonePreview, OrbitalElements
 from ..core.orbits import PRESETS, degrees_to_radians, radians_to_degrees
-from ..core.session import StarForgeSession
 from .components import InspectorRow, NavButton, NoticeBanner, PageHeader, Surface
+from .tasks import BackgroundTask, TaskFunction
 from .theme import application_stylesheet
 
 PROJECT_PAGE = 0
@@ -43,9 +47,12 @@ REVIEW_PAGE = 4
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.session: StarForgeSession | None = None
+        self.session: Workspace | None = None
         self.current_preview: ClonePreview | None = None
         self.design_preview_mode = False
+        self.settings = QSettings("Eclipse Content Engine", "StarForge")
+        self.thread_pool = QThreadPool.globalInstance()
+        self.active_task: BackgroundTask | None = None
         self.setWindowTitle("StarForge")
         self.setMinimumSize(1080, 720)
         self.resize(1440, 900)
@@ -54,6 +61,9 @@ class MainWindow(QMainWindow):
         self._install_shortcuts()
         self._set_enabled(False)
         self.navigate(PROJECT_PAGE)
+        saved_geometry = self.settings.value("window/geometry")
+        if isinstance(saved_geometry, QByteArray):
+            self.restoreGeometry(saved_geometry)
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -138,9 +148,19 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         self.validation_label = QLabel("●  Waiting for project")
         self.validation_label.setProperty("status", "warning")
+        self.task_progress = QProgressBar()
+        self.task_progress.setFixedWidth(190)
+        self.task_progress.setRange(0, 100)
+        self.task_progress.hide()
+        self.cancel_task_button = QPushButton("Cancel")
+        self.cancel_task_button.setProperty("variant", "ghost")
+        self.cancel_task_button.clicked.connect(self.cancel_active_task)
+        self.cancel_task_button.hide()
         self.open_button = QPushButton("Open project")
         self.open_button.setProperty("variant", "primary")
         self.open_button.clicked.connect(self.open_session)
+        layout.addWidget(self.task_progress)
+        layout.addWidget(self.cancel_task_button)
         layout.addWidget(self.validation_label)
         layout.addWidget(self.open_button)
         return bar
@@ -231,12 +251,21 @@ class MainWindow(QMainWindow):
         self.inspector_kind = QLabel("Select a star, planet, or moon")
         self.inspector_kind.setProperty("role", "muted")
         self.inspector_details = QVBoxLayout()
-        self.inspector_details.addWidget(InspectorRow("Form ID", "—", technical=True))
-        self.inspector_details.addWidget(InspectorRow("System ID", "—", technical=True))
-        self.inspector_details.addWidget(InspectorRow("Editor ID", "—", technical=True))
+        self.inspector_form_id = InspectorRow("Form ID", "—", technical=True)
+        self.inspector_system_id = InspectorRow("System ID", "—", technical=True)
+        self.inspector_editor_id = InspectorRow("Editor ID", "—", technical=True)
+        self.inspector_details.addWidget(self.inspector_form_id)
+        self.inspector_details.addWidget(self.inspector_system_id)
+        self.inspector_details.addWidget(self.inspector_editor_id)
         inspector.content_layout.addWidget(self.inspector_name)
         inspector.content_layout.addWidget(self.inspector_kind)
         inspector.content_layout.addLayout(self.inspector_details)
+        self.dependency_label = QLabel(
+            "Select an object to see which related records are protected or updated with it."
+        )
+        self.dependency_label.setProperty("role", "muted")
+        self.dependency_label.setWordWrap(True)
+        inspector.content_layout.addWidget(self.dependency_label)
         inspector.content_layout.addSpacing(8)
         inspector.content_layout.addWidget(QLabel("System ID"))
         self.system_id_input = QLineEdit()
@@ -411,6 +440,11 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.review_notice)
         columns = QSplitter(Qt.Orientation.Horizontal)
         changes = Surface("Pending changes", "Changes remain in memory until you export.")
+        changes.content_layout.addWidget(QLabel("Applied edits"))
+        self.applied_change_list = QListWidget()
+        self.applied_change_list.setAccessibleName("Applied changes ready for export")
+        changes.content_layout.addWidget(self.applied_change_list, 1)
+        changes.content_layout.addWidget(QLabel("Staged clone drafts"))
         self.draft_list = QListWidget()
         self.draft_list.setAccessibleName("Staged changes")
         changes.content_layout.addWidget(self.draft_list, 1)
@@ -508,23 +542,39 @@ class MainWindow(QMainWindow):
             button.setEnabled(enabled)
 
     def open_session(self) -> None:
-        source_path_str, _ = QFileDialog.getOpenFileName(self, "Select source master", "", "Plugins (*.esm *.esp)")
+        source_start = str(self.settings.value("recent/source_directory", ""))
+        source_path_str, _ = QFileDialog.getOpenFileName(
+            self, "Select source master", source_start, "Plugins (*.esm *.esp)"
+        )
         if not source_path_str:
             return
-        dest_path_str, _ = QFileDialog.getOpenFileName(self, "Select destination plugin", "", "Plugins (*.esm *.esp)")
+        destination_start = str(self.settings.value("recent/destination_directory", ""))
+        dest_path_str, _ = QFileDialog.getOpenFileName(
+            self, "Select destination plugin", destination_start, "Plugins (*.esm *.esp)"
+        )
         if not dest_path_str:
             return
-        try:
-            self.session = StarForgeSession(Path(source_path_str), Path(dest_path_str))
-        except Exception as exc:
-            QMessageBox.critical(self, "Project could not be opened", str(exc))
-            return
+        source_path = Path(source_path_str)
+        destination_path = Path(dest_path_str)
+
+        def open_workspace(token: CancellationToken, progress: Callable[[ProgressUpdate], None]) -> Workspace:
+            return Workspace.open(source_path, destination_path, cancellation=token, progress=progress)
+
+        self._start_background(
+            open_workspace,
+            self._workspace_opened,
+            title="Opening project",
+            recovery="Check that both plugins are readable and choose different source and destination files.",
+        )
+
+    def _workspace_opened(self, workspace: Workspace) -> None:
+        self.session = workspace
         self.design_preview_mode = False
         self.current_preview = None
-        self.source_label.setText(f"Source master\n{source_path_str}")
-        self.dest_label.setText(f"Destination plugin\n{dest_path_str}")
-        self.project_name_label.setText(Path(dest_path_str).stem)
-        self.project_path_label.setText(dest_path_str)
+        self.source_label.setText(f"Source master\n{workspace.source_path}")
+        self.dest_label.setText(f"Destination plugin\n{workspace.destination_path}")
+        self.project_name_label.setText(workspace.destination_path.stem)
+        self.project_path_label.setText(str(workspace.destination_path))
         self.validation_label.setText("●  Inputs validated")
         self.validation_label.setProperty("status", "success")
         self.validation_label.style().unpolish(self.validation_label)
@@ -534,6 +584,8 @@ class MainWindow(QMainWindow):
         self._refresh_clone_mode()
         self._update_change_tray()
         self.navigate(EXPLORE_PAGE)
+        self.settings.setValue("recent/source_directory", str(workspace.source_path.parent))
+        self.settings.setValue("recent/destination_directory", str(workspace.destination_path.parent))
 
     def enter_design_preview(self) -> None:
         self.session = None
@@ -561,6 +613,7 @@ class MainWindow(QMainWindow):
             self.source_planet_combo,
             self.destination_star_combo,
             self.destination_parent_combo,
+            self.applied_change_list,
             self.draft_list,
         ):
             widget.clear()
@@ -579,15 +632,94 @@ class MainWindow(QMainWindow):
     def save_as(self) -> None:
         if self.session is None:
             return
-        output_path_str, _ = QFileDialog.getSaveFileName(self, "Export edited plugin", "", "Plugins (*.esm *.esp)")
+        output_start = str(self.settings.value("recent/output_directory", self.session.destination_path.parent))
+        output_path_str, _ = QFileDialog.getSaveFileName(
+            self, "Export edited plugin", output_start, "Plugins (*.esm *.esp)"
+        )
         if not output_path_str:
             return
-        try:
-            self.session.save_as(Path(output_path_str))
-        except Exception as exc:
-            QMessageBox.critical(self, "Export failed", str(exc))
+        output_path = Path(output_path_str)
+        workspace = self.session
+
+        def export_workspace(token: CancellationToken, progress: Callable[[ProgressUpdate], None]) -> object:
+            return workspace.export(
+                output_path,
+                overwrite=output_path.exists(),
+                cancellation=token,
+                progress=progress,
+            )
+
+        self._start_background(
+            export_workspace,
+            lambda _result: self._export_completed(output_path),
+            title="Exporting plugin",
+            recovery="Apply or discard staged drafts, then choose a writable output path and try again.",
+        )
+
+    def _export_completed(self, output_path: Path) -> None:
+        self.status_label.setText(f"Validated output saved to {output_path}")
+        self.settings.setValue("recent/output_directory", str(output_path.parent))
+        self.validation_label.setText("●  Export validated")
+        self.validation_label.setProperty("status", "success")
+
+    def _start_background(
+        self,
+        function: TaskFunction,
+        on_result: Callable[[Any], None],
+        *,
+        title: str,
+        recovery: str,
+    ) -> None:
+        if self.active_task is not None:
             return
-        self._update_change_tray()
+        task = BackgroundTask(function)
+        task.signals.progress.connect(self._on_task_progress)
+        task.signals.result.connect(on_result)
+        task.signals.error.connect(lambda error: self._show_error(title, error, recovery))
+        task.signals.finished.connect(self._finish_background)
+        self.active_task = task
+        self._set_busy(True, title)
+        self.thread_pool.start(task)
+
+    def _on_task_progress(self, update: object) -> None:
+        if not isinstance(update, ProgressUpdate):
+            return
+        self.task_progress.setValue(round(update.fraction * 100))
+        self.task_progress.setFormat(f"{update.message}  %p%")
+        self.status_label.setText(update.message)
+
+    def _set_busy(self, busy: bool, title: str = "") -> None:
+        self.pages.setEnabled(not busy)
+        self.open_button.setEnabled(not busy)
+        self.task_progress.setVisible(busy)
+        self.cancel_task_button.setVisible(busy)
+        if busy:
+            self.task_progress.setValue(0)
+            self.task_progress.setFormat(f"{title}  %p%")
+
+    def cancel_active_task(self) -> None:
+        if self.active_task is None:
+            return
+        self.active_task.cancel()
+        self.status_label.setText("Cancelling safely…")
+        self.cancel_task_button.setEnabled(False)
+
+    def _finish_background(self) -> None:
+        self.active_task = None
+        self.cancel_task_button.setEnabled(True)
+        self._set_busy(False)
+
+    def _show_error(self, title: str, error: object, recovery: str) -> None:
+        message = QMessageBox(self)
+        message.setIcon(QMessageBox.Icon.Critical)
+        message.setWindowTitle(title)
+        message.setText(str(error))
+        message.setInformativeText(f"No input files were changed. {recovery}")
+        if isinstance(error, ApplicationError):
+            message.setDetailedText(f"Error code: {error.code}")
+        else:
+            message.setDetailedText(repr(error))
+        message.exec()
 
     def _populate_lists(self) -> None:
         assert self.session is not None
@@ -617,8 +749,9 @@ class MainWindow(QMainWindow):
             self.planet_list.addItem(label)
             if not planet.is_moon:
                 self.destination_parent_combo.addItem(label, planet.form_id)
-        for draft in self.session.state.draft_previews:
+        for draft in self.session.drafts:
             self.draft_list.addItem(f"{draft.draft_id}  {draft.kind.upper()}  {draft.new_display_name}")
+        self.applied_change_list.addItems(self.session.applied_change_summaries)
         self.preview_text.setPlainText(
             "\n".join(self.current_preview.draft.preview_lines) if self.current_preview else ""
         )
@@ -693,27 +826,57 @@ class MainWindow(QMainWindow):
             self.system_id_input.setText("4096")
             self.inspector_name.setText(self.star_list.item(row).text().split("  ·")[0])
             self.inspector_kind.setText("Star system")
+            self.inspector_form_id.set_value("0x0012ABCD")
+            self.inspector_system_id.set_value("4096")
+            self.inspector_editor_id.set_value("StarForgeDemoStar")
+            self.dependency_label.setText(
+                "A system ID change also updates this star's child planets and linked locations."
+            )
             return
         if self.session is None or row < 0 or row >= len(self.session.view.stars):
             self.system_id_input.clear()
+            self._clear_inspector_details()
             return
         star = self.session.view.stars[row]
         self.system_id_input.setText(str(star.system_id))
         self.inspector_name.setText(star.display_name or star.editor_id or hex(star.form_id))
         self.inspector_kind.setText("Star system")
+        self.inspector_form_id.set_value(f"0x{star.form_id:08X}")
+        self.inspector_system_id.set_value(str(star.system_id))
+        self.inspector_editor_id.set_value(star.editor_id or "—")
+        self.dependency_label.setText("A system ID change also updates this star's child planets and linked locations.")
 
     def _on_hierarchy_planet_changed(self, row: int) -> None:
         if row < 0:
             return
         if self.design_preview_mode:
-            self.inspector_name.setText(self.hierarchy_planet_list.item(row).text().strip())
-            self.inspector_kind.setText("Moon" if "Moon" in self.hierarchy_planet_list.item(row).text() else "Planet")
+            item_text = self.hierarchy_planet_list.item(row).text().strip()
+            self.inspector_name.setText(item_text)
+            self.inspector_kind.setText("Moon" if "Moon" in item_text else "Planet")
+            self.inspector_form_id.set_value("0x0012BCDE")
+            self.inspector_system_id.set_value("4096")
+            self.inspector_editor_id.set_value("StarForgeDemoBody")
+            self.dependency_label.setText(
+                "Orbit edits validate this body against its sibling orbits before they are applied."
+            )
             return
         if self.session is None or row >= len(self.session.view.planets):
             return
         planet = self.session.view.planets[row]
         self.inspector_name.setText(planet.display_name or planet.editor_id or hex(planet.form_id))
         self.inspector_kind.setText("Moon" if planet.is_moon else "Planet")
+        self.inspector_form_id.set_value(f"0x{planet.form_id:08X}")
+        self.inspector_system_id.set_value(str(planet.system_id))
+        self.inspector_editor_id.set_value(planet.editor_id or "—")
+        self.dependency_label.setText(
+            "Orbit edits validate this body against its sibling orbits before they are applied."
+        )
+
+    def _clear_inspector_details(self) -> None:
+        self.inspector_form_id.set_value("—")
+        self.inspector_system_id.set_value("—")
+        self.inspector_editor_id.set_value("—")
+        self.dependency_label.setText("Select an object to see which related records are protected or updated with it.")
 
     def _on_planet_changed(self, row: int) -> None:
         if self.design_preview_mode and row >= 0:
@@ -762,7 +925,11 @@ class MainWindow(QMainWindow):
         try:
             self.session.set_star_system_id(self.session.view.stars[row].form_id, int(self.system_id_input.text()))
         except Exception as exc:
-            QMessageBox.critical(self, "System ID update failed", str(exc))
+            self._show_error(
+                "System ID update failed",
+                exc,
+                "Choose an unused numeric system ID, then try staging the change again.",
+            )
             return
         self._populate_lists()
 
@@ -782,7 +949,11 @@ class MainWindow(QMainWindow):
         try:
             self.current_preview = self._build_preview()
         except Exception as exc:
-            QMessageBox.critical(self, "Preview failed", str(exc))
+            self._show_error(
+                "Preview failed",
+                exc,
+                "Check the selected template, destination, and required name fields, then preview again.",
+            )
             return
         self.preview_text.setPlainText(
             "\n".join(self.current_preview.hard_errors or self.current_preview.draft.preview_lines)
@@ -795,7 +966,7 @@ class MainWindow(QMainWindow):
         try:
             self.session.stage_draft(self.current_preview)
         except Exception as exc:
-            QMessageBox.critical(self, "Stage failed", str(exc))
+            self._show_error("Stage failed", exc, "Resolve the preview errors before staging this draft.")
             return
         self._populate_lists()
         self.navigate(REVIEW_PAGE)
@@ -807,7 +978,7 @@ class MainWindow(QMainWindow):
             draft = self.session.stage_draft(self.current_preview)
             self.session.apply_draft(draft.draft_id)
         except Exception as exc:
-            QMessageBox.critical(self, "Apply failed", str(exc))
+            self._show_error("Apply failed", exc, "Return to the preview and correct the reported values.")
             return
         self.current_preview = None
         self._populate_lists()
@@ -819,7 +990,9 @@ class MainWindow(QMainWindow):
         try:
             self.session.apply_draft(draft_id)
         except Exception as exc:
-            QMessageBox.critical(self, "Apply draft failed", str(exc))
+            self._show_error(
+                "Apply draft failed", exc, "Review this draft and correct any conflicts before applying it."
+            )
             return
         self._populate_lists()
 
@@ -829,7 +1002,7 @@ class MainWindow(QMainWindow):
         try:
             self.session.apply_all_drafts()
         except Exception as exc:
-            QMessageBox.critical(self, "Apply all failed", str(exc))
+            self._show_error("Apply all failed", exc, "Apply drafts individually to identify and correct the conflict.")
             return
         self.current_preview = None
         self._populate_lists()
@@ -838,7 +1011,11 @@ class MainWindow(QMainWindow):
         if self.session is None or self.draft_list.currentRow() < 0:
             return
         draft_id = self.draft_list.currentItem().text().split()[0]
-        self.session.discard_draft(draft_id)
+        try:
+            self.session.discard_draft(draft_id)
+        except Exception as exc:
+            self._show_error("Discard failed", exc, "Refresh the change list and select the draft again.")
+            return
         self._populate_lists()
 
     def _build_preview(self) -> ClonePreview:
@@ -923,7 +1100,11 @@ class MainWindow(QMainWindow):
                 self.session.view.planets[self.planet_list.currentRow()].form_id, preset_key
             )
         except Exception as exc:
-            QMessageBox.critical(self, "Preset failed", str(exc))
+            self._show_error(
+                "Preset failed",
+                exc,
+                "Choose a planet or moon with orbital data, then apply the preset again.",
+            )
             return
         self._load_orbit_fields(orbit)
         self._update_change_tray()
@@ -937,14 +1118,23 @@ class MainWindow(QMainWindow):
                 raise ValueError("Fill all orbit fields before staging the change.")
             self.session.set_planet_orbit(self.session.view.planets[self.planet_list.currentRow()].form_id, orbit)
         except Exception as exc:
-            QMessageBox.critical(self, "Orbit update failed", str(exc))
+            self._show_error(
+                "Orbit update failed",
+                exc,
+                "Fill every visible orbit field with a valid number and resolve any overlap reported.",
+            )
             return
         self._populate_lists()
 
     def _update_change_tray(self) -> None:
         if self.session is None:
             return
-        pending = self.session.state.pending
-        count = pending.applied_change_count + len(pending.staged_draft_ids)
+        count = self.session.pending_change_count
         self.change_count_label.setText(f"{count} pending {'change' if count == 1 else 'changes'}")
         self.status_label.setText(self.session.state.status_text)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.settings.setValue("window/geometry", self.saveGeometry())
+        if self.active_task is not None:
+            self.active_task.cancel()
+        super().closeEvent(event)
