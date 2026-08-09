@@ -16,11 +16,7 @@ def verify_bundle(bundle: Path) -> tuple[list[Path], list[Path]]:
     )
     missing = [path for path in required if not path.is_file()]
     prohibited = {".esm", ".esp", ".esl", ".ba2", ".biom"}
-    leaked = [
-        path
-        for path in bundle.rglob("*")
-        if path.is_file() and path.suffix.casefold() in prohibited
-    ]
+    leaked = [path for path in bundle.rglob("*") if path.is_file() and path.suffix.casefold() in prohibited]
     return missing, leaked
 
 
@@ -35,8 +31,7 @@ def main() -> int:
         return 1
     if leaked:
         print(
-            "Proprietary or generated data found in release:\n"
-            + "\n".join(map(str, leaked)),
+            "Proprietary or generated data found in release:\n" + "\n".join(map(str, leaked)),
             file=sys.stderr,
         )
         return 1

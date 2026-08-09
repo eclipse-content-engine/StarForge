@@ -95,7 +95,8 @@ jobs:
       - name: Record unsigned status
         if: env.WINDOWS_CERTIFICATE_BASE64 == ''
         shell: pwsh
-        run: "Unsigned alpha build: no WINDOWS_CERTIFICATE_BASE64 secret configured." | Out-File dist\SIGNING_STATUS.txt
+        run: |
+          "Unsigned alpha build: no WINDOWS_CERTIFICATE_BASE64 secret configured." | Out-File dist\SIGNING_STATUS.txt
       - name: Generate checksums
         shell: pwsh
         run: |
