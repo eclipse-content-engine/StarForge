@@ -3,10 +3,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from conftest import PluginFixtures
 
 from starforge.application import ExitCode
 from starforge.cli import main
+
+
+def test_version_flag_reports_package_version(capsys) -> None:
+    with pytest.raises(SystemExit) as caught:
+        main(["--version"])
+
+    assert caught.value.code == 0
+    assert capsys.readouterr().out == "StarForge 0.3.0a1\n"
 
 
 def test_inspect_json_contract(capsys, plugin_fixtures: PluginFixtures) -> None:

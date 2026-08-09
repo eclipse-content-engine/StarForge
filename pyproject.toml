@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "starforge"
-version = "0.2.0"
+dynamic = ["version"]
 description = "Desktop and command-line tools for safe Starfield system authoring"
 readme = "README.md"
 license = "MIT"
@@ -25,6 +25,7 @@ dev = [
     "pytest-qt>=4.4",
     "ruff>=0.9",
 ]
+release = ["build>=1.2", "pyinstaller>=6.15,<7"]
 
 [project.gui-scripts]
 starforge-gui = "starforge.ui.app:run"
@@ -37,6 +38,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "starforge.__version__"}
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

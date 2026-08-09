@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "packaging/**"
+      - "scripts/stage_release.py"
+      - "scripts/verify_release.py"
+      - "pyproject.toml"
+      - "src/**"
+      - "docs/**"
+      - "README.md"
+      - "LICENSE"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  python-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip build
+      - run: python -m build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: python-packages
+          path: dist/*
+          if-no-files-found: error
+
+  windows-artifacts:
+    runs-on: windows-2022
+    env:
+      WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install release dependencies
+        run: python -m pip install --upgrade pip ".[release]"
+      - name: Resolve versions
+        shell: pwsh
+        run: |
+          $packageVersion = python -c "import starforge; print(starforge.__version__)"
+          $displayVersion = $packageVersion -replace 'a', '-alpha.'
+          "PACKAGE_VERSION=$packageVersion" >> $env:GITHUB_ENV
+          "DISPLAY_VERSION=$displayVersion" >> $env:GITHUB_ENV
+      - name: Build shared GUI and CLI bundle
+        run: pyinstaller --noconfirm --clean --distpath dist --workpath build\pyinstaller packaging\StarForge.spec
+      - name: Stage user documentation
+        run: python scripts\stage_release.py dist\StarForge
+      - name: Verify portable bundle
+        shell: pwsh
+        run: |
+          python scripts\verify_release.py dist\StarForge
+          $reported = & dist\StarForge\starforge-cli.exe --version
+          if ($reported -ne "StarForge $env:PACKAGE_VERSION") { throw "Unexpected CLI version: $reported" }
+      - name: Decode signing certificate
+        if: env.WINDOWS_CERTIFICATE_BASE64 != ''
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\starforge-signing.pfx", [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64))
+      - name: Sign portable executables
+        if: env.WINDOWS_CERTIFICATE_BASE64 != ''
+        shell: pwsh
+        run: |
+          & signtool sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f "$env:RUNNER_TEMP\starforge-signing.pfx" /p "$env:WINDOWS_CERTIFICATE_PASSWORD" dist\StarForge\StarForge.exe
+          & signtool sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f "$env:RUNNER_TEMP\starforge-signing.pfx" /p "$env:WINDOWS_CERTIFICATE_PASSWORD" dist\StarForge\starforge-cli.exe
+      - name: Create portable archive
+        shell: pwsh
+        run: Compress-Archive -Path dist\StarForge -DestinationPath "dist\StarForge-$env:DISPLAY_VERSION-Windows-Portable.zip"
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path -LiteralPath $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          & $iscc "/DAppVersion=$env:DISPLAY_VERSION" "/DSourceDir=$pwd\dist\StarForge" "/DOutputDir=$pwd\dist" packaging\installer.iss
+      - name: Sign Windows installer
+        if: env.WINDOWS_CERTIFICATE_BASE64 != ''
+        shell: pwsh
+        run: |
+          & signtool sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f "$env:RUNNER_TEMP\starforge-signing.pfx" /p "$env:WINDOWS_CERTIFICATE_PASSWORD" "dist\StarForge-$env:DISPLAY_VERSION-Windows-Setup.exe"
+      - name: Record unsigned status
+        if: env.WINDOWS_CERTIFICATE_BASE64 == ''
+        shell: pwsh
+        run: |
+          "Unsigned alpha build: no WINDOWS_CERTIFICATE_BASE64 secret configured." | Out-File dist\SIGNING_STATUS.txt
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -File | Where-Object Extension -In '.zip', '.exe' | ForEach-Object {
+            $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash *$($_.Name)"
+          } | Out-File -Encoding ascii dist\SHA256SUMS.txt
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-artifacts
+          path: |
+            dist/*.zip
+            dist/*-Setup.exe
+            dist/SHA256SUMS.txt
+            dist/SIGNING_STATUS.txt
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [python-packages, windows-artifacts]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" artifacts/* --verify-tag --prerelease --generate-notes --title "StarForge $GITHUB_REF_NAME"

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any, Never
 
+from . import __version__
 from .application import (
     ApplicationError,
     ClonePlanetRequest,
@@ -66,6 +67,7 @@ def _add_orbit_fields(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = StarForgeArgumentParser(prog="starforge", description="Safe Starfield plugin authoring")
+    parser.add_argument("--version", action="version", version=f"StarForge {__version__}")
     parser.add_argument("--json", action="store_true", dest="json_output", help="Emit stable machine-readable JSON")
     parser.add_argument(
         "--non-interactive", action="store_true", help="Never prompt (currently the default for every CLI operation)"

@@ -1,3 +1,5 @@
 """StarForge package."""
 
-__all__: list[str] = []
+__version__ = "0.3.0a1"
+
+__all__ = ["__version__"]

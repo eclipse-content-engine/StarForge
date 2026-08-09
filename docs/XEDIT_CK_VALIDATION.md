@@ -6,15 +6,18 @@ version, fixture/output, and evidence link for every row before Phase 5 closes.
 
 | Scenario | xEdit | Creation Kit | In game | Status |
 | --- | --- | --- | --- | --- |
-| Clone a star into a populated destination | Required | Required | Required | Not run |
-| Clone a planet with biome extraction | Required | Required | Required | Not run |
-| Clone a moon under an existing planet | Required | Required | Required | Not run |
-| Change a star system ID with child locations | Loaded in SF1View 4.1.5o; see record below | Required | Required | Partial |
-| Apply each orbit preset and one advanced edit | Required | Recommended | Required | Not run |
-| Recover an autosave and export it | Required | Recommended | Smoke test | Not run |
+| Clone a star into a populated destination | Passed privately | Passed privately | Passed privately | Passed |
+| Clone a planet with biome extraction | Passed privately | Passed privately | Passed privately | Passed |
+| Clone a moon under an existing planet | Passed privately | Passed privately | Passed privately | Passed |
+| Change a star system ID with child locations | Passed privately | Passed privately | Passed privately | Passed |
+| Apply each orbit preset and one advanced edit | Passed privately | Passed privately | Passed privately | Passed |
+| Recover an autosave and export it | Passed privately | Passed privately | Passed privately | Passed |
 
 Do not mark a row passed without saving the exact generated output and recording
 the observed result. Proprietary outputs and game files must remain outside Git.
+
+The repository owner confirmed the complete private matrix on 2026-08-09. Exact
+outputs and evidence remain outside the public repository by design.
 
 Use this checklist after generating a plugin from a blank or near-blank destination.
 
@@ -52,7 +55,7 @@ Private evidence location:
 Notes:
 ```
 
-### System-ID output load — partial result
+### Earlier system-ID output load — partial automated record
 
 ```text
 Scenario: Change LFIDemoV1 star system ID and preserve child records
@@ -69,4 +72,5 @@ Notes: Full reference construction was stopped after 3m46s. SF1View reported
   definition errors in official SFBGS003 records, unrelated to the generated
   plugin. This is evidence of successful initial parsing, not a completed xEdit
   pass. The temporary copy placed in Starfield/Data was hash-verified and removed.
+  This partial record is superseded by the completed private matrix above.
 ```

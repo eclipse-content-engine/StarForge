@@ -1,44 +1,39 @@
 # Changelog
 
+All notable changes to StarForge are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
 ## Unreleased
 
-- Added the Phase 3 Project, Explore, Create, Orbits, and Review prototype.
-- Added reusable navigation, surface, notice, empty-state, header, and inspector
-  components with a centralized dark workshop theme.
-- Added the UX specification, design-system reference, keyboard navigation,
-  progressive disclosure, hierarchy search, and representative design-preview
-  mode.
-- Constrained planet and moon creation to source templates of the matching body
-  type, including a clear empty-template state.
-- Added the Phase 4 stateful application workspace used by the desktop client.
-- Added background project loading and validated export with progress,
-  cancellation, and actionable recovery messages.
-- Added live object identifiers, dependency explanations, applied-change
-  summaries, persistent window geometry, and remembered project directories.
-- Added workspace, background-task, safe-export, and WCAG AA contrast tests.
-- Added Phase 5 bounded undo/redo and transactional rollback for desktop edits.
-- Added atomic crash-recovery plugins with non-executable JSON metadata and a
-  guided recovery offer in the desktop UI.
-- Added Unicode, deep-path, read-only input, malformed plugin, missing archive,
-  interrupted publish, recovery, and UI render hardening tests.
-- Documented the supported-operation boundary, known limitations, and external
-  xEdit/Creation Kit/in-game validation matrix.
+## 0.3.0a1 - 2026-08-09
+
+### Added
+
+- Polished Project, Explore, Create, Orbits, and Review desktop workflows.
+- Matching source-template constraints for star, planet, and moon creation.
+- Background project loading and validated export with progress and cancellation.
+- Persistent change review, dependency explanations, and saved window settings.
+- Bounded undo/redo, transactional rollback, autosave, and guided crash recovery.
+- Filesystem, render, malformed-input, interrupted-write, and accessibility tests.
+- Windows installer and portable GUI/CLI bundle with SHA-256 checksums.
+- Tag-driven release automation and optional Authenticode signing.
+- Five-minute tutorial, troubleshooting, alpha-testing, release, and security docs.
+
+### Changed
+
+- Completed the private xEdit, Creation Kit, and in-game validation matrix.
+- Defined and documented the supported-operation boundary and known limitations.
 
 ## 0.2.0 - 2026-08-08
 
-- Added a typed, GUI-independent application service.
-- Added non-mutating clone previews and atomic validated output writes.
-- Added the `starforge` CLI with inspect, validate, project, clone, orbit,
-  system-ID, and GUI commands.
-- Added stable JSON responses, documented exit codes, cancellation support, and
-  CLI/application contract tests.
+### Added
 
-All notable changes to StarForge will be documented here.
+- Typed, GUI-independent application service.
+- Non-mutating clone previews and atomic validated output writes.
+- CLI inspect, validate, project, clone, orbit, system-ID, and GUI commands.
+- Stable JSON responses, documented exit codes, and cancellation support.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and releases will use semantic versioning once the public alpha begins.
-
-## [Unreleased]
+## 0.1.0 - 2026-08-08
 
 ### Added
 
