@@ -127,5 +127,6 @@ starforge orbit set `
   --output .\MyMod-Orbit.esp
 ```
 
-Launch the current desktop prototype explicitly with `starforge gui` or
-`starforge-gui`.
+Launch the polished desktop application explicitly with `starforge gui` or
+`starforge-gui`. Windows release archives also provide `StarForge.exe` for the
+windowed app and `starforge-cli.exe` for console and agent workflows.

@@ -2,19 +2,18 @@
 
 ## Supported versions
 
-StarForge is pre-alpha software. Security fixes are applied to the latest code
-on the `main` branch until the first supported release line is established.
+Security fixes are provided for the newest public alpha or stable release.
 
 ## Reporting a vulnerability
 
-Do not open a public issue for vulnerabilities involving arbitrary file writes,
-path traversal, malformed-plugin crashes with security impact, dependency
-compromise, or release artifact tampering.
-
-Use GitHub's private vulnerability reporting feature for this repository. If it
-is unavailable, contact the repository owner privately through the account
+Please report vulnerabilities privately through
+[GitHub private vulnerability reporting](https://github.com/eclipse-content-engine/StarForge/security/advisories/new).
+If it is unavailable, contact the repository owner privately through the account
 listed on GitHub.
 
-Reports should include affected versions, reproduction steps, potential impact,
-and whether a proof-of-concept plugin contains proprietary game data. Do not
-upload Bethesda-owned files; provide a minimal generated reproducer instead.
+Do not open a public issue for arbitrary file writes, path traversal,
+malformed-plugin crashes with security impact, dependency compromise, release
+artifact tampering, credentials, private plugins, or game data. Include the
+affected version, impact, reproduction steps, and any suggested mitigation. Use
+a minimal generated reproducer instead of Bethesda-owned files. The maintainers
+will acknowledge the report and coordinate disclosure after a fix is available.

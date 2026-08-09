@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .. import __version__
 from ..application import (
     ApplicationError,
     CancellationToken,
@@ -138,7 +139,7 @@ class MainWindow(QMainWindow):
             self.nav_buttons.append(button)
             layout.addWidget(button)
         layout.addStretch(1)
-        version = QLabel("PRE-ALPHA  ·  0.2")
+        version = QLabel(f"PUBLIC ALPHA  ·  {__version__}")
         version.setProperty("role", "muted")
         layout.addWidget(version)
         return sidebar

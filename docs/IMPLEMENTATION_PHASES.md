@@ -147,9 +147,9 @@ contract.
 
 **Goal:** prove that StarForge is safe and dependable on real projects.
 
-**Current status:** automated hardening is implemented. External xEdit,
-Creation Kit, and in-game compatibility runs remain the final Phase 5 gate and
-must use locally owned game data outside the public repository.
+**Current status:** complete as of 2026-08-09. The automated hardening suite and
+the private xEdit, Creation Kit, and in-game compatibility matrix passed using
+locally owned game data outside the public repository.
 
 ### Work
 
@@ -158,7 +158,7 @@ must use locally owned game data outside the public repository.
 - [x] Add UI smoke tests and selected render snapshots.
 - [x] Test clean installation, schema handling, Unicode paths, supported long paths, read-only inputs,
   missing archives, interrupted writes, and malformed plugins.
-- [ ] Validate representative outputs with xEdit, Creation Kit, and in-game checks.
+- [x] Validate representative outputs with xEdit, Creation Kit, and in-game checks.
 - [x] Document the supported-operation matrix and known limitations.
 
 ### Exit criteria
@@ -172,14 +172,20 @@ must use locally owned game data outside the public repository.
 **Goal:** distribute a trustworthy alpha and establish a sustainable release
 process.
 
+**Current status:** release-candidate implementation is in progress. The shared
+GUI/CLI portable bundle, Windows installer definition, checksums, optional
+signing, release verification, and user documentation are implemented for
+`0.3.0a1`; clean-runner validation and the limited external alpha remain.
+
 ### Work
 
-- Add GitHub Actions for linting, tests, packaging, and release artifacts.
-- Produce a Windows installer and portable archive.
-- Sign binaries when a code-signing certificate is available.
-- Publish screenshots, a five-minute tutorial, CLI reference, troubleshooting,
+- [x] Add GitHub Actions for linting, tests, packaging, and release artifacts.
+- [x] Produce a Windows installer and portable archive.
+- [x] Sign binaries when a code-signing certificate is available and clearly
+  label unsigned builds otherwise.
+- [x] Publish screenshots, a five-minute tutorial, CLI reference, troubleshooting,
   changelog, and security reporting instructions.
-- Run a limited external alpha before declaring the release stable.
+- [ ] Run a limited external alpha before declaring the release stable.
 
 ### Exit criteria
 
@@ -190,7 +196,7 @@ process.
 
 ## MVP scope
 
-Version 0.1 includes plugin opening, hierarchy browsing, star/planet/moon cloning,
+Version 0.3 alpha includes plugin opening, hierarchy browsing, star/planet/moon cloning,
 system-ID management, orbital editing, preview, validation, staging, safe export,
 CLI parity, and Windows packaging.
 
