@@ -105,10 +105,13 @@ class InspectorRow(QWidget):
         layout.setContentsMargins(0, 5, 0, 5)
         key = QLabel(label)
         key.setProperty("role", "muted")
-        shown_value = QLabel(value)
-        shown_value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.value_label = QLabel(value)
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         if technical:
-            shown_value.setProperty("role", "technical")
+            self.value_label.setProperty("role", "technical")
         layout.addWidget(key)
         layout.addStretch(1)
-        layout.addWidget(shown_value)
+        layout.addWidget(self.value_label)
+
+    def set_value(self, value: str) -> None:
+        self.value_label.setText(value)

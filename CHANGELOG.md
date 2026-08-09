@@ -10,6 +10,12 @@
   mode.
 - Constrained planet and moon creation to source templates of the matching body
   type, including a clear empty-template state.
+- Added the Phase 4 stateful application workspace used by the desktop client.
+- Added background project loading and validated export with progress,
+  cancellation, and actionable recovery messages.
+- Added live object identifiers, dependency explanations, applied-change
+  summaries, persistent window geometry, and remembered project directories.
+- Added workspace, background-task, safe-export, and WCAG AA contrast tests.
 
 ## 0.2.0 - 2026-08-08
 

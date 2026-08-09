@@ -29,6 +29,22 @@ ProgressCallback = Callable[[ProgressUpdate], None]
 
 
 class StarForgeApplication:
+    def export_session(
+        self,
+        session: StarForgeSession,
+        output_path: Path,
+        *,
+        overwrite: bool = False,
+        cancellation: CancellationToken | None = None,
+    ) -> None:
+        """Validate and atomically publish an in-memory application session."""
+        self._atomic_session_write(
+            session,
+            output_path,
+            overwrite=overwrite,
+            cancellation=cancellation,
+        )
+
     def inspect(self, plugin_path: Path) -> OperationResult:
         path = self._require_plugin(plugin_path)
         try:
