@@ -1,0 +1,38 @@
+name: Bug report
+description: Report reproducible StarForge behavior without uploading game data.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Use generated or redacted examples. Do not attach Bethesda files.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: StarForge version
+    validations:
+      required: true
+  - type: dropdown
+    id: interface
+    attributes:
+      label: Interface
+      options: [Desktop UI, CLI, Python API]
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: I have not attached proprietary game files or extracted assets.
+          required: true
