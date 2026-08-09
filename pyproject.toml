@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "starforge"
-version = "0.1.0"
+version = "0.2.0"
 description = "Desktop and command-line tools for safe Starfield system authoring"
 readme = "README.md"
 license = "MIT"
@@ -28,6 +28,9 @@ dev = [
 
 [project.gui-scripts]
 starforge-gui = "starforge.ui.app:run"
+
+[project.scripts]
+starforge = "starforge.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

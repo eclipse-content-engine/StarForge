@@ -18,9 +18,9 @@ is a functional prototype; a new guided desktop experience is planned in
 
 ## Development status
 
-Phase 1 is in progress. Packaging, dependency isolation, redistributable test
-fixtures, and clean-machine reproducibility must be completed before a public
-release.
+Phases 1 and 2 are complete. StarForge now has a reproducible public foundation,
+a typed application layer, and a stable non-interactive CLI. Phase 3 will define
+the replacement UI workflow and visual system before the desktop MVP is wired.
 
 The public test suite builds compact synthetic plugins and archives at runtime.
 Optional private compatibility tests remain excluded from version control. See
@@ -34,8 +34,12 @@ primitives in the `starforge.formats` package.
 ```powershell
 python -m pip install -e .
 python -m pytest
-python -m starforge
+python -m starforge --help
+python -m starforge gui
 ```
+
+See [`docs/CLI.md`](docs/CLI.md) for commands, safety guarantees, JSON output,
+and documented exit codes.
 
 ### Windows path length
 

@@ -1,3 +1,3 @@
-from .ui.app import run
+from .cli import main
 
-raise SystemExit(run())
+raise SystemExit(main())
