@@ -1,4 +1,20 @@
-# StarForge manual validation
+# StarForge manual validation matrix
+
+Synthetic tests validate StarForge's parser/writer contract, but they cannot
+substitute for external-tool and game validation. Record the tester, date, tool
+version, fixture/output, and evidence link for every row before Phase 5 closes.
+
+| Scenario | xEdit | Creation Kit | In game | Status |
+| --- | --- | --- | --- | --- |
+| Clone a star into a populated destination | Required | Required | Required | Not run |
+| Clone a planet with biome extraction | Required | Required | Required | Not run |
+| Clone a moon under an existing planet | Required | Required | Required | Not run |
+| Change a star system ID with child locations | Loaded in SF1View 4.1.5o; see record below | Required | Required | Partial |
+| Apply each orbit preset and one advanced edit | Required | Recommended | Required | Not run |
+| Recover an autosave and export it | Required | Recommended | Smoke test | Not run |
+
+Do not mark a row passed without saving the exact generated output and recording
+the observed result. Proprietary outputs and game files must remain outside Git.
 
 Use this checklist after generating a plugin from a blank or near-blank destination.
 
@@ -20,3 +36,37 @@ Use this checklist after generating a plugin from a blank or near-blank destinat
 3. Check cloned planets/moons for sane hierarchy and non-broken location linkage.
 4. If biome extraction was enabled, verify the expected `.biom` file exists under `planetdata/biomemaps/`.
 5. Sanity-check that orbital edits and inserted planets/moons do not produce obviously broken hierarchy or naming.
+
+## Validation record
+
+Copy one block per scenario:
+
+```text
+Scenario:
+Tester and date:
+StarForge commit:
+xEdit version/result:
+Creation Kit version/result:
+Game version/result:
+Private evidence location:
+Notes:
+```
+
+### System-ID output load — partial result
+
+```text
+Scenario: Change LFIDemoV1 star system ID and preserve child records
+Tester and date: Codex automated setup / 2026-08-08
+StarForge base commit: 1b05648 plus the Phase 5 working tree
+Output SHA-256: B79844AAAD07B9C1984DF693953954ADBD603DC8EDF061E36D01389A9EE95271
+xEdit version/result: SF1View 4.1.5o loaded the generated plugin, displayed its
+  header and managed groups, and exposed all three planet records. No fatal
+  parse error naming the generated plugin appeared before the run was stopped.
+Creation Kit version/result: Not run
+Game version/result: Not run
+Private evidence location: local-only temporary output; not committed
+Notes: Full reference construction was stopped after 3m46s. SF1View reported
+  definition errors in official SFBGS003 records, unrelated to the generated
+  plugin. This is evidence of successful initial parsing, not a completed xEdit
+  pass. The temporary copy placed in Starfield/Data was hash-verified and removed.
+```

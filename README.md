@@ -24,6 +24,11 @@ layer, a stable non-interactive CLI, and a polished guided UI over the same
 engine. Project loading and validated export run in cancellable background jobs;
 inputs remain protected and every pending write is reviewable.
 
+Phase 5 hardening adds bounded undo/redo, transactional rollback, protected
+recovery snapshots, and filesystem/render regression coverage. See the
+[`supported-operation matrix`](docs/SUPPORTED_OPERATIONS.md) for the exact
+pre-alpha boundary and known limitations.
+
 The public test suite builds compact synthetic plugins and archives at runtime.
 Optional private compatibility tests remain excluded from version control. See
 [`docs/PUBLICATION_SAFETY.md`](docs/PUBLICATION_SAFETY.md).
