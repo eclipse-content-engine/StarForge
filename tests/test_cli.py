@@ -15,7 +15,7 @@ def test_version_flag_reports_package_version(capsys) -> None:
         main(["--version"])
 
     assert caught.value.code == 0
-    assert capsys.readouterr().out == "StarForge 0.3.0a1\n"
+    assert capsys.readouterr().out == "StarForge 0.3.0a2\n"
 
 
 def test_inspect_json_contract(capsys, plugin_fixtures: PluginFixtures) -> None:

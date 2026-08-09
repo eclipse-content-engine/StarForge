@@ -5,6 +5,13 @@ All notable changes to StarForge are documented here. The format follows
 
 ## Unreleased
 
+## 0.3.0a2 - 2026-08-09
+
+### Fixed
+
+- Made combo-box popup text, hover, and selected states readable on Windows by
+  explicitly applying the StarForge dark-theme palette.
+
 ## 0.3.0a1 - 2026-08-09
 
 ### Added

@@ -5,8 +5,8 @@ also includes a scriptable CLI for coding agents and advanced users.
 
 ## 1. Install or unpack
 
-- Installer: run `StarForge-0.3.0-alpha.1-Windows-Setup.exe`.
-- Portable: unpack the entire `StarForge-0.3.0-alpha.1-Windows-Portable.zip`
+- Installer: run `StarForge-0.3.0-alpha.2-Windows-Setup.exe`.
+- Portable: unpack the entire `StarForge-0.3.0-alpha.2-Windows-Portable.zip`
   archive, then run `StarForge.exe` from the extracted folder.
 
 Compare the downloaded file against `SHA256SUMS.txt`. Alpha artifacts may be

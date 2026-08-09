@@ -9,7 +9,7 @@ must not be assembled manually.
 2. Update `src/starforge/__init__.py`, `CHANGELOG.md`, and release docs.
 3. Run the Release workflow manually on the candidate commit and install its
    artifacts on a clean supported Windows system.
-4. Create and push the annotated tag, for example `v0.3.0-alpha.1`.
+4. Create and push the annotated tag, for example `v0.3.0-alpha.2`.
 5. Verify the GitHub release contains the installer, portable archive, Python
    packages, checksums, and signing-status notice when applicable.
 6. Verify both `StarForge.exe` and `starforge-cli.exe --version` after download.
