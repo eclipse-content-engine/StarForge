@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Added the Phase 3 Project, Explore, Create, Orbits, and Review prototype.
+- Added reusable navigation, surface, notice, empty-state, header, and inspector
+  components with a centralized dark workshop theme.
+- Added the UX specification, design-system reference, keyboard navigation,
+  progressive disclosure, hierarchy search, and representative design-preview
+  mode.
+
 ## 0.2.0 - 2026-08-08
 
 - Added a typed, GUI-independent application service.

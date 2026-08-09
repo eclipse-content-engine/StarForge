@@ -93,16 +93,21 @@ validated and atomically replaced.
 **Goal:** approve the new interaction model and visual language before wiring
 every backend feature into widgets.
 
+**Current status:** in progress. The UX specification, design tokens, reusable
+components, and navigable PySide6 prototype are ready for visual review. Final
+design approval and Windows high-DPI validation remain open.
+
 ### Work
 
-- Design the project-opening, clone, orbit, review, and export workflows.
-- Create wireframes for welcome, workspace, inspector, change tray, empty,
+- [x] Design the project-opening, clone, orbit, review, and export workflows.
+- [x] Create wireframes for welcome, workspace, inspector, change tray, empty,
   loading, warning, and error states.
-- Define typography, color, spacing, elevation, iconography, and component states.
-- Build reusable PySide6 navigation, card, field, notice, inspector, dialog, and
+- [x] Define typography, color, spacing, elevation, iconography, and component states.
+- [x] Build reusable PySide6 navigation, surface, field, notice, inspector, and
   command components.
-- Validate high-DPI behavior, keyboard navigation, focus visibility, and color
+- [ ] Validate high-DPI behavior, keyboard navigation, focus visibility, and color
   contrast.
+- [ ] Receive design approval before Phase 4 feature integration.
 
 ### Exit criteria
 
