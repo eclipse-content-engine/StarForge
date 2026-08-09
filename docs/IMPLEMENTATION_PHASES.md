@@ -30,9 +30,9 @@ rules independently.
 **Goal:** create a clean, legally publishable, reproducible base before product
 development begins.
 
-**Current status:** ready for the initial GitHub push and CI run. The public
-suite uses only generated fixtures, the package no longer depends on a sibling
-source tree, and the wheel passes an isolated installation audit.
+**Current status:** complete as of 2026-08-08. The public repository is live,
+and the full CI matrix passes on Windows and Linux with Python 3.11, 3.12, and
+3.13.
 
 ### Work
 
@@ -50,7 +50,7 @@ source tree, and the wheel passes an isolated installation audit.
 - [x] Replace private game-file tests with generated redistributable fixtures.
 - [x] Add linting, formatting, typing, and clean-environment test configuration.
 - [x] Make all local public tests pass without private files.
-- [ ] Confirm the same suite from the first clean GitHub checkout and CI run.
+- [x] Confirm the same suite from the first clean GitHub checkout and CI run.
 
 ### Exit criteria
 
