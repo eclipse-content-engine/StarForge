@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from starforge.ui.theme import TOKENS
+from starforge.ui.theme import TOKENS, application_stylesheet
 
 
 def _contrast_ratio(foreground: str, background: str) -> float:
@@ -18,3 +18,13 @@ def test_core_theme_colors_meet_wcag_aa_contrast() -> None:
     assert _contrast_ratio(TOKENS.muted, TOKENS.surface) >= 4.5
     assert _contrast_ratio(TOKENS.accent, TOKENS.canvas) >= 4.5
     assert _contrast_ratio(TOKENS.error, TOKENS.surface) >= 4.5
+
+
+def test_combo_popup_text_meets_contrast_and_has_explicit_states() -> None:
+    stylesheet = application_stylesheet()
+
+    assert _contrast_ratio(TOKENS.text, TOKENS.field) >= 4.5
+    assert _contrast_ratio(TOKENS.text, TOKENS.selection) >= 4.5
+    assert "QComboBox QAbstractItemView" in stylesheet
+    assert f"selection-color: {TOKENS.text}" in stylesheet
+    assert f"selection-background-color: {TOKENS.selection}" in stylesheet
