@@ -19,8 +19,9 @@ is a functional prototype; a new guided desktop experience is planned in
 ## Development status
 
 Phases 1 and 2 are complete. StarForge now has a reproducible public foundation,
-a typed application layer, and a stable non-interactive CLI. Phase 3 will define
-the replacement UI workflow and visual system before the desktop MVP is wired.
+a typed application layer, and a stable non-interactive CLI. Phase 3 is in
+progress with a navigable replacement UI prototype and documented visual system
+awaiting design approval before the desktop MVP is wired.
 
 The public test suite builds compact synthetic plugins and archives at runtime.
 Optional private compatibility tests remain excluded from version control. See
