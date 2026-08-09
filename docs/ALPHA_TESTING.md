@@ -1,6 +1,6 @@
 # Public alpha testing
 
-The `0.3.0a1` release is intentionally limited. Keep backups, export to a new
+The `0.3.0a2` release is intentionally limited. Keep backups, export to a new
 plugin, and validate important outputs with xEdit, the Creation Kit, and the
 game before using them in a real mod.
 

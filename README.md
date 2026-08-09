@@ -3,7 +3,7 @@
 StarForge is a desktop and command-line toolkit for safely creating and editing
 Starfield star systems, planets, moons, and orbital data.
 
-The project is preparing its `0.3.0a1` public alpha. Its PySide6 desktop client
+The current public alpha is `0.3.0a2`. Its PySide6 desktop client
 provides a guided, non-destructive authoring workflow, while the first-class CLI
 supports coding agents and advanced users.
 

@@ -175,7 +175,7 @@ process.
 **Current status:** release-candidate implementation is in progress. The shared
 GUI/CLI portable bundle, Windows installer definition, checksums, optional
 signing, release verification, and user documentation are implemented for
-`0.3.0a1`; clean-runner validation and the limited external alpha remain.
+`0.3.0a2`; clean-runner validation and the limited external alpha remain.
 
 ### Work
 
