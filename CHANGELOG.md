@@ -8,6 +8,8 @@
 - Added the UX specification, design-system reference, keyboard navigation,
   progressive disclosure, hierarchy search, and representative design-preview
   mode.
+- Constrained planet and moon creation to source templates of the matching body
+  type, including a clear empty-template state.
 
 ## 0.2.0 - 2026-08-08
 

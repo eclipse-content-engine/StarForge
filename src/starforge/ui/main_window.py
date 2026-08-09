@@ -569,7 +569,6 @@ class MainWindow(QMainWindow):
         self.hierarchy_planet_list.addItems(bodies)
         self.planet_list.addItems(bodies)
         self.source_star_combo.addItems(["Sol", "Narion", "Cheyenne"])
-        self.source_planet_combo.addItems(["Jemison", "Akila", "Kreet", "Luna"])
         self.destination_star_combo.addItems(["Aster Vale", "Pytheas"])
         self.destination_parent_combo.addItems(["Aster I", "Verdantia", "Cinder"])
         self.draft_list.addItems(["CREATE  Verdantia Minor", "ORBIT  Cinder — Wide Stable"])
@@ -618,10 +617,6 @@ class MainWindow(QMainWindow):
             self.planet_list.addItem(label)
             if not planet.is_moon:
                 self.destination_parent_combo.addItem(label, planet.form_id)
-        for planet in self.session.view.source_planets:
-            prefix = "Moon" if planet.is_moon else "Planet"
-            label = f"{prefix}  {planet.display_name or planet.editor_id or hex(planet.form_id)}"
-            self.source_planet_combo.addItem(label, planet.form_id)
         for draft in self.session.state.draft_previews:
             self.draft_list.addItem(f"{draft.draft_id}  {draft.kind.upper()}  {draft.new_display_name}")
         self.preview_text.setPlainText(
@@ -638,7 +633,7 @@ class MainWindow(QMainWindow):
         is_star = mode == "Star"
         is_moon = mode == "Moon"
         self.source_star_combo.setEnabled(is_star)
-        self.source_planet_combo.setEnabled(not is_star)
+        self._populate_source_body_templates(mode)
         self.destination_star_combo.setEnabled(mode == "Planet")
         self.destination_parent_combo.setEnabled(is_moon)
         for widget in (self.position_x_input, self.position_y_input, self.position_z_input):
@@ -651,6 +646,36 @@ class MainWindow(QMainWindow):
         for widget in (self.position_x_input, self.position_y_input, self.position_z_input):
             self.create_form.setRowVisible(widget, is_star)
         self.create_form.setRowVisible(self.extract_biom_checkbox, not is_star)
+
+    def _populate_source_body_templates(self, mode: str) -> None:
+        self.source_planet_combo.clear()
+        if mode == "Star":
+            return
+        want_moon = mode == "Moon"
+        field_label = self.create_form.labelForField(self.source_planet_combo)
+        if isinstance(field_label, QLabel):
+            field_label.setText("Source moon" if want_moon else "Source planet")
+
+        if self.design_preview_mode:
+            demo_templates = (
+                (("Luna", 0x10), ("Phobos", 0x11))
+                if want_moon
+                else (("Jemison", 0x20), ("Akila", 0x21), ("Kreet", 0x22))
+            )
+            for label, form_id in demo_templates:
+                self.source_planet_combo.addItem(label, form_id)
+        elif self.session is not None:
+            for planet in self.session.view.source_planets:
+                if planet.is_moon != want_moon:
+                    continue
+                label = planet.display_name or planet.editor_id or hex(planet.form_id)
+                self.source_planet_combo.addItem(label, planet.form_id)
+
+        has_templates = self.source_planet_combo.count() > 0
+        if not has_templates:
+            body_type = "moon" if want_moon else "planet"
+            self.source_planet_combo.addItem(f"No {body_type} templates available", None)
+        self.source_planet_combo.setEnabled(has_templates)
 
     def _filter_hierarchy(self, query: str) -> None:
         normalized = query.strip().casefold()
@@ -841,7 +866,11 @@ class MainWindow(QMainWindow):
                     float(self.position_z_input.text() or 0.0),
                 ),
             )
-        source_form_id = int(self.source_planet_combo.currentData())
+        selected_source_form_id = self.source_planet_combo.currentData()
+        if selected_source_form_id is None:
+            body_type = "moon" if mode == "Moon" else "planet"
+            raise ValueError(f"No {body_type} templates are available in the source plugin.")
+        source_form_id = int(selected_source_form_id)
         source_planet = next(item for item in self.session.view.source_planets if item.form_id == source_form_id)
         new_name = new_name or f"{source_planet.display_name or ('NewMoon' if mode == 'Moon' else 'NewPlanet')} Clone"
         new_editor_id = (

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from conftest import PluginFixtures
 from pytestqt.qtbot import QtBot
 
+from starforge.core.session import StarForgeSession
 from starforge.ui.main_window import CREATE_PAGE, EXPLORE_PAGE, ORBITS_PAGE, PROJECT_PAGE, REVIEW_PAGE, MainWindow
 
 
@@ -65,3 +67,34 @@ def test_hierarchy_search_and_advanced_orbit_disclosure(qtbot: QtBot) -> None:
     window.navigate(ORBITS_PAGE)
     window.advanced_orbit_button.setChecked(True)
     assert not window.orbit_advanced_widget.isHidden()
+
+
+def test_design_preview_filters_source_templates_by_body_type(qtbot: QtBot) -> None:
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.enter_design_preview()
+
+    window.clone_mode_combo.setCurrentText("Planet")
+    planet_templates = [window.source_planet_combo.itemText(row) for row in range(window.source_planet_combo.count())]
+    assert planet_templates == ["Jemison", "Akila", "Kreet"]
+
+    window.clone_mode_combo.setCurrentText("Moon")
+    moon_templates = [window.source_planet_combo.itemText(row) for row in range(window.source_planet_combo.count())]
+    assert moon_templates == ["Luna", "Phobos"]
+
+
+def test_missing_matching_template_has_clear_disabled_state(qtbot: QtBot, plugin_fixtures: PluginFixtures) -> None:
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.session = StarForgeSession(plugin_fixtures.source, plugin_fixtures.destination)
+    window._populate_lists()
+    window._set_enabled(True)
+
+    window.clone_mode_combo.setCurrentText("Planet")
+    assert window.source_planet_combo.currentData() == 0x101
+    assert window.source_planet_combo.isEnabled()
+
+    window.clone_mode_combo.setCurrentText("Moon")
+    assert window.source_planet_combo.currentData() is None
+    assert window.source_planet_combo.currentText() == "No moon templates available"
+    assert not window.source_planet_combo.isEnabled()

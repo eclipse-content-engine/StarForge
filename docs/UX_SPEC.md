@@ -52,7 +52,8 @@ to final review.
 ### Clone a body
 
 1. Choose Star, Planet, or Moon.
-2. Choose the source template.
+2. Choose the source template. Planet creation lists only planet templates;
+   moon creation lists only moon templates.
 3. Choose the destination parent when required.
 4. Enter the display name and optional technical editor ID.
 5. Review the generated preview, warnings, allocated IDs, and planned files.

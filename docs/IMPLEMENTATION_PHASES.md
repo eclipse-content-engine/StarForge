@@ -93,9 +93,9 @@ validated and atomically replaced.
 **Goal:** approve the new interaction model and visual language before wiring
 every backend feature into widgets.
 
-**Current status:** in progress. The UX specification, design tokens, reusable
-components, and navigable PySide6 prototype are ready for visual review. Final
-design approval and Windows high-DPI validation remain open.
+**Current status:** in final validation. The UX specification, design tokens,
+reusable components, and navigable PySide6 prototype received visual approval
+on 2026-08-08. Final Windows high-DPI and contrast validation remain open.
 
 ### Work
 
@@ -107,7 +107,7 @@ design approval and Windows high-DPI validation remain open.
   command components.
 - [ ] Validate high-DPI behavior, keyboard navigation, focus visibility, and color
   contrast.
-- [ ] Receive design approval before Phase 4 feature integration.
+- [x] Receive design approval before Phase 4 feature integration.
 
 ### Exit criteria
 
