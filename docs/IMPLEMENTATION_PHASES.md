@@ -66,16 +66,20 @@ and the full CI matrix passes on Windows and Linux with Python 3.11, 3.12, and
 **Goal:** make every supported edit available through a stable headless API and
 CLI before attaching the replacement UI.
 
+**Current status:** complete as of 2026-08-08. The typed application layer and
+CLI share the existing domain engine, previews are non-mutating, and writes are
+validated and atomically replaced.
+
 ### Work
 
-- Decompose `StarForgeSession` into explicit application operations.
-- Define typed request, preview, result, warning, and error models.
-- Add progress and cancellation support for long plugin operations.
-- Implement CLI commands for inspect, project creation, clone, orbit editing,
+- [x] Decompose `StarForgeSession` into explicit application operations.
+- [x] Define typed request, preview, result, warning, and error models.
+- [x] Add progress and cancellation support for long plugin operations.
+- [x] Implement CLI commands for inspect, project creation, clone, orbit editing,
   validation, preview, apply, and GUI launch.
-- Support stable JSON output, documented exit codes, and non-interactive mode.
-- Write outputs through temporary files followed by atomic replacement.
-- Add application, CLI contract, and failure-path tests.
+- [x] Support stable JSON output, documented exit codes, and non-interactive mode.
+- [x] Write outputs through temporary files followed by atomic replacement.
+- [x] Add application, CLI contract, and failure-path tests.
 
 ### Exit criteria
 

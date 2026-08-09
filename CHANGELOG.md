@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 - 2026-08-08
+
+- Added a typed, GUI-independent application service.
+- Added non-mutating clone previews and atomic validated output writes.
+- Added the `starforge` CLI with inspect, validate, project, clone, orbit,
+  system-ID, and GUI commands.
+- Added stable JSON responses, documented exit codes, cancellation support, and
+  CLI/application contract tests.
+
 All notable changes to StarForge will be documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
