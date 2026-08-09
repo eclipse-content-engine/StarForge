@@ -9,6 +9,8 @@ class DesignTokens:
     sidebar: str = "#0E1420"
     surface: str = "#121A27"
     raised: str = "#172233"
+    field: str = "#0F1622"
+    selection: str = "#20354A"
     border: str = "#263449"
     text: str = "#F3F7FC"
     muted: str = "#9DABBE"
@@ -93,7 +95,7 @@ def application_stylesheet(tokens: DesignTokens = TOKENS) -> str:
     }}
     QLineEdit, QComboBox, QTextEdit, QListWidget {{
         color: {tokens.text};
-        background: #0F1622;
+        background: {tokens.field};
         border: 1px solid {tokens.border};
         border-radius: 7px;
         padding: 8px 10px;
@@ -107,12 +109,25 @@ def application_stylesheet(tokens: DesignTokens = TOKENS) -> str:
         color: #657287; background: #111823;
     }}
     QComboBox::drop-down {{ border: none; width: 28px; }}
+    QComboBox QAbstractItemView {{
+        color: {tokens.text};
+        background: {tokens.field};
+        border: 1px solid {tokens.border};
+        selection-color: {tokens.text};
+        selection-background-color: {tokens.selection};
+        outline: none;
+    }}
+    QComboBox QAbstractItemView::item {{ min-height: 34px; padding: 4px 10px; }}
+    QComboBox QAbstractItemView::item:hover {{ background: {tokens.raised}; color: {tokens.text}; }}
+    QComboBox QAbstractItemView::item:selected {{ background: {tokens.selection}; color: {tokens.text}; }}
     QListWidget::item {{ padding: 10px; border-radius: 6px; }}
     QListWidget::item:hover {{ background: #172233; }}
-    QListWidget::item:selected {{ background: #20354A; color: {tokens.text}; }}
+    QListWidget::item:selected {{ background: {tokens.selection}; color: {tokens.text}; }}
     QCheckBox {{ color: {tokens.text}; spacing: 8px; }}
     QCheckBox::indicator {{ width: 17px; height: 17px; }}
-    QCheckBox::indicator:unchecked {{ background: #0F1622; border: 1px solid {tokens.border}; border-radius: 4px; }}
+    QCheckBox::indicator:unchecked {{
+        background: {tokens.field}; border: 1px solid {tokens.border}; border-radius: 4px;
+    }}
     QCheckBox::indicator:checked {{
         background: {tokens.accent}; border: 1px solid {tokens.accent}; border-radius: 4px;
     }}
